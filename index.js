@@ -16,13 +16,48 @@ const file = readline.createInterface({
     terminal: false,
 });
 
+const COLOR = {
+    RESET: "\u001b[0m",
+    BLACK: "\u001b[30m",
+    WHITE: "\u001b[37m",
+    RED: "\u001b[31m",
+    GREEN: "\u001b[32m",
+    BLUE: "\u001b[34m",
+    YELLOW: "\u001b[33m",
+    CYAN: "\u001b[36m",
+    MAGENTA: "\u001b[35m",
+};
+
+const nameMap = {
+    "iron-ore": "iron",
+    "copper-ore": "copper",
+    "crude-oil": "oil",
+    "uranium-ore": "uranium",
+    "se-cryonite": `${COLOR.BLUE}cryonite${COLOR.RESET}`,
+    "se-vulcanite": `${COLOR.RED}vulcanite${COLOR.RESET}`,
+    "se-vitamelange": `${COLOR.GREEN}vitamelange${COLOR.RESET}`,
+    "se-iridium-ore": `${COLOR.YELLOW}iridium${COLOR.RESET}`,
+    "se-holmium-ore": `${COLOR.MAGENTA}holmium${COLOR.RESET}`,
+    "se-beryllium-ore": `${COLOR.CYAN}beryl${COLOR.RESET}`,
+};
+function rename(oldName) {
+    if (nameMap[oldName]) {
+        return nameMap[oldName];
+    }
+    return oldName;
+}
+
+function noColorLength(string) {
+    return string.replace(/\x1b\[[0-9;]*m/g, "").length;
+}
+
 function surfaceInfo(surface) {
     let resources = [];
     let resourceKeys = Object.keys(surface.resource).sort((a, b) => {
         return surface.resource[b] - surface.resource[a];
     });
     for (let i = 0; i < Math.min(6, resourceKeys.length); i++) {
-        resources.push(resourceKeys[i]);
+        resources.push(rename(resourceKeys[i]));
         resources.push(Math.floor(surface.resource[resourceKeys[i]] * 10000) / 10000);
     }
     return [
@@ -42,8 +77,8 @@ function printTable(table) {
         // For each column
         for (let j = 0; j < table[i].length; j++) {
             if (!columnWidths[j]) columnWidths[j] = 0;
-            if (table[i][j].toString().length > columnWidths[j])
-                columnWidths[j] = table[i][j].toString().length;
+            if (noColorLength(table[i][j].toString()) > columnWidths[j])
+                columnWidths[j] = noColorLength(table[i][j].toString());
         }
     }
     // For each row
@@ -53,9 +88,7 @@ function printTable(table) {
         for (let j = 0; j < table[i].length; j++) {
             let temp = table[i][j];
             // Add padding according to the calculated column widths
-            while (temp.toString().length < columnWidths[j]) {
-                temp += " ";
-            }
+            temp += " ".repeat(columnWidths[j] - noColorLength(temp.toString()));
             // Add an extra space between items
             padded += temp + " ";
         }
